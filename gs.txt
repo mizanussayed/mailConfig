@@ -1,0 +1,44 @@
+var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1o1tTKsxu9N6ZF33S92FxR7E-mx9ZcDZkli8rNHg8hjE/edit#gid=0';
+
+function getSheet() {
+  var scriptProperties = PropertiesService.getScriptProperties();
+  var cache = CacheService.getScriptCache();
+  var sheet = cache.get('sheet');
+  if (!sheet) {
+    sheet = SpreadsheetApp.openByUrl(SPREADSHEET_URL).getSheetByName('BasicInfo');
+    cache.put('sheet', sheet, 300);  // cache for 5 minutes
+  }
+  return sheet;
+}
+
+function doPost(e) {
+  // Get the form data
+  let data = e.parameter;
+
+  // Add the form data to the sheet
+  var sheet = getSheet();
+  var range = sheet.getRange(sheet.getLastRow() + 1, 1, 1, 4);
+  var values = [[data.name, data.email, data.phone, data.message]];
+  range.setValues(values);
+
+  // Send a confirmation email
+  //var recipient = formData.email;
+  //var subject = 'Form submitted';
+  //var body = 'Thank you for your message! We will get back to you soon.';
+  //MailApp.sendEmail(recipient, subject, body);
+ 
+  // Return a JSON response
+  var response = {
+    status: 'success',
+    message: 'Form submitted successfully'
+  };
+  sendEmail(data.name, data.email, data.phone, data.message);
+  return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
+}
+function sendEmail(name, email, phone, message) {
+  var recipient = "round48special@gmail.com";
+  var subject = "New contact form submission";
+  var body = "Name: " + name + "\nEmail: " + email + "\nPhone: " + phone + "\nMessage: " + message;
+  GmailApp.sendEmail(recipient, subject, body);
+}
+
